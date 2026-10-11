@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SG 過去問トレーナー</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --ink: #1b1f24;
+    --ink-dim: #5c6773;
+    --line: #dfe3e8;
+    --accent: #2f6df6;
+    --accent-ink: #ffffff;
+    --ok: #11845b;
+    --ok-bg: #e7f6ef;
+    --ng: #c0392b;
+    --ng-bg: #fdecea;
+    --warn: #8a6100;
+    --warn-bg: #fdf3dc;
+    --radius: 10px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15181d; --panel: #1d2127; --ink: #e8ebef; --ink-dim: #9aa5b1;
+      --line: #2e343c; --accent: #5a8dff; --accent-ink: #0d1117;
+      --ok: #52d6a0; --ok-bg: #16312a; --ng: #ff8a7a; --ng-bg: #3a1f1c;
+      --warn: #e9c46a; --warn-bg: #352c16;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15181d; --panel: #1d2127; --ink: #e8ebef; --ink-dim: #9aa5b1;
+    --line: #2e343c; --accent: #5a8dff; --accent-ink: #0d1117;
+    --ok: #52d6a0; --ok-bg: #16312a; --ng: #ff8a7a; --ng-bg: #3a1f1c;
+    --warn: #e9c46a; --warn-bg: #352c16;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-size: 15px; line-height: 1.65;
+    display: flex; flex-direction: column;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 10px 16px; background: var(--panel);
+    border-bottom: 1px solid var(--line); flex: none;
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 700; letter-spacing: .02em; }
+  header h1 small { font-weight: 400; color: var(--ink-dim); margin-left: 8px; font-size: 12px; }
+  nav { display: flex; gap: 4px; }
+  nav button {
+    background: none; border: 1px solid transparent; border-radius: 8px;
+    padding: 5px 12px; color: var(--ink-dim);
+  }
+  nav button:hover { background: var(--bg); }
+  nav button[aria-current="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .spacer { flex: 1; }
+  .ghost {
+    background: none; border: 1px solid var(--line); border-radius: 8px;
+    padding: 5px 11px; color: var(--ink-dim);
+  }
+  .ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  #demobar {
+    flex: none; padding: 9px 16px; font-size: 12.5px; line-height: 1.6;
+    background: var(--warn-bg); color: var(--warn); border-bottom: 1px solid var(--line);
+  }
+  #demobar b { font-weight: 700; }
+  main { flex: 1; min-height: 0; overflow: auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+  #view-drill.active { display: flex; height: 100%; }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 20px 64px; }
+  h2 { font-size: 17px; margin: 0 0 4px; }
+  h3 { font-size: 14px; margin: 28px 0 10px; color: var(--ink-dim);
+       text-transform: none; letter-spacing: .03em; }
+  .sub { color: var(--ink-dim); font-size: 13px; margin: 0 0 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+
+  /* ---------- home ---------- */
+  #about { background: var(--panel); border: 1px solid var(--line);
+           border-radius: var(--radius); padding: 20px 22px; margin-bottom: 26px; }
+  #about h2 { margin-bottom: 10px; }
+  #about p { margin: 0 0 12px; font-size: 13.5px; }
+  #about dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px;
+              margin: 0; font-size: 13px; }
+  #about dt { color: var(--accent); font-weight: 600; }
+  #about dd { margin: 0; color: var(--ink-dim); }
+  #about .foot { font-size: 11.5px; color: var(--ink-dim); margin: 16px 0 0;
+                 border-top: 1px solid var(--line); padding-top: 12px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 15px; }
+  .tile .n { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .tile .k { font-size: 12px; color: var(--ink-dim); }
+  .tile .k b { color: var(--ink); font-weight: 600; }
+
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+  p.group { font-size: 12px; color: var(--ink-dim); margin: 20px 0 8px; letter-spacing: .03em; }
+  p.group:first-child { margin-top: 0; }
+  .mode {
+    text-align: left; background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 14px 15px; display: block; width: 100%;
+  }
+  .mode:hover:not(:disabled) { border-color: var(--accent); }
+  .mode:disabled { opacity: .45; cursor: not-allowed; }
+  .mode b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .mode span { font-size: 12px; color: var(--ink-dim); }
+  .mode .count { float: right; font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-dim); font-weight: 600; font-size: 12px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr:hover { background: var(--bg); }
+  td .bar { width: 90px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; min-width: 70px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+  .pill { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px;
+          background: var(--bg); border: 1px solid var(--line); color: var(--ink-dim); }
+  a { color: var(--accent); }
+
+  /* ---------- drill ---------- */
+  #pdfpane { flex: 1; min-width: 0; background: var(--bg); position: relative; }
+  #pdfpane iframe { width: 100%; height: 100%; border: 0; display: block; }
+  #pdfcanvas { position: absolute; inset: 0; overflow: auto; background: var(--panel);
+               padding: 14px; text-align: center; }
+  #pdfcanvas canvas { max-width: 100%; height: auto; background: #fff;
+                      box-shadow: 0 1px 10px rgba(0,0,0,.25); }
+  #pdffail { color: var(--ink-dim); font-size: 13px; padding: 40px 20px; line-height: 1.8; }
+  #pdfnote {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 14px;
+    background: var(--warn-bg); color: var(--warn); font-size: 12px; line-height: 1.6;
+    border-top: 1px solid var(--line);
+  }
+  #pdfnote p { margin: 0; }
+  #qtext {
+    position: absolute; inset: 0; overflow-y: auto; background: var(--panel);
+    padding: 40px 48px 64px; font-size: 15.5px; line-height: 1.9;
+  }
+  #qtext .tag {
+    display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 99px;
+    background: var(--warn-bg); color: var(--warn); margin-bottom: 18px;
+  }
+  #qtext .q { font-weight: 600; margin: 0 0 26px; }
+  #qtext ol { list-style: none; margin: 0; padding: 0; }
+  #qtext ol li { display: flex; gap: 14px; margin-bottom: 14px; }
+  #qtext ol li > b { flex: none; font-weight: 600; }
+  #qtext .src { margin-top: 34px; font-size: 12px; color: var(--ink-dim);
+                border-top: 1px solid var(--line); padding-top: 12px; }
+  @media (max-width: 1100px) {
+    #qtext { padding: 20px 18px 48px; font-size: 14.5px; line-height: 1.8; }
+    #qtext ol li { gap: 9px; }
+  }
+  #splitter { flex: none; width: 6px; cursor: col-resize; background: var(--line); }
+  #splitter:hover { background: var(--accent); }
+
+  #answerpane {
+    flex: none; width: 430px; min-width: 300px; max-width: 70vw;
+    background: var(--panel); border-left: 1px solid var(--line);
+    display: flex; flex-direction: column; overflow-y: auto;
+  }
+  .pane-pad { padding: 16px 18px; }
+  .qhead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .qhead .no { font-size: 21px; font-weight: 700; }
+  .qhead .meta { font-size: 12px; color: var(--ink-dim); }
+  .progress { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-dim); margin-top: 4px; }
+  .progress .bar { flex: 1; }
+  .label { font-size: 12.5px; color: var(--ink-dim); margin: 10px 0 0;
+           border-left: 3px solid var(--line); padding-left: 9px; }
+  .cite { font-size: 11px; color: var(--ink-dim); margin: 8px 0 0; }
+  .mates { font-size: 12px; color: var(--ink-dim); margin: 12px 0 0;
+           background: var(--bg); border-radius: 8px; padding: 7px 11px; }
+  .mates b { color: var(--accent); }
+
+  .step { font-size: 12px; font-weight: 700; color: var(--accent); margin: 20px 0 7px;
+          letter-spacing: .04em; }
+  .step.done { color: var(--ink-dim); font-weight: 600; }
+  .choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .choices.wide { grid-template-columns: repeat(4, 1fr); }
+  .choice {
+    background: var(--bg); border: 1.5px solid var(--line); border-radius: 9px;
+    padding: 11px 0; font-size: 19px; font-weight: 600; position: relative;
+  }
+  .choice:hover:not(:disabled) { border-color: var(--accent); }
+  .choice kbd {
+    position: absolute; top: 3px; left: 5px; font: 400 9.5px/1 var(--mono);
+    color: var(--ink-dim); background: none;
+  }
+  .choice[data-state="picked"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+  .choice[data-state="correct"] { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+  .choice[data-state="wrong"] { border-color: var(--ng); background: var(--ng-bg); color: var(--ng); }
+  .choice:disabled { cursor: default; }
+
+  .confs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .conf {
+    background: var(--bg); border: 1.5px solid var(--line); border-radius: 9px;
+    padding: 9px 4px; font-size: 13px; font-weight: 600; position: relative;
+  }
+  .conf:hover:not(:disabled) { border-color: var(--accent); }
+  .conf[data-on="1"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+  .conf kbd { display: block; font: 400 9.5px/1.6 var(--mono); color: var(--ink-dim); }
+  .conf[data-on="1"] kbd { color: var(--accent-ink); opacity: .8; }
+  .conf:disabled { cursor: default; opacity: .75; }
+
+  #verdict { border-radius: 9px; padding: 12px 14px; margin-top: 20px; display: none; }
+  #verdict.show { display: block; }
+  #verdict.ok { background: var(--ok-bg); color: var(--ok); }
+  #verdict.ng { background: var(--ng-bg); color: var(--ng); }
+  #verdict.lucky { background: var(--warn-bg); color: var(--warn); }
+  #verdict b { font-size: 15px; }
+
+  #detail { display: none; margin-top: 16px; }
+  #detail.show { display: block; }
+  #detail h4 { font-size: 12px; color: var(--accent); margin: 0 0 6px; letter-spacing: .04em; }
+  #detail .body { font-size: 13.5px; }
+  #detail .picked {
+    margin-top: 12px; padding: 10px 12px; border-radius: 9px;
+    background: var(--ng-bg); color: var(--ng); font-size: 13px;
+  }
+  #detail .picked b { font-weight: 700; }
+  #detail ul { margin: 12px 0 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--ink-dim); }
+  #detail ul li { margin-bottom: 5px; padding-left: 22px; text-indent: -22px; }
+  #detail ul li b { color: var(--ink); display: inline-block; width: 16px; text-indent: 0; }
+  #verdict p { margin: 4px 0 0; font-size: 12.5px; }
+
+  textarea {
+    width: 100%; min-height: 84px; resize: vertical; font: inherit; font-size: 13.5px;
+    background: var(--bg); color: var(--ink); border: 1.5px solid var(--line);
+    border-radius: 9px; padding: 9px 11px;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+  .hint { font-size: 11.5px; color: var(--ink-dim); margin: 5px 0 0; }
+
+  .pane-foot {
+    margin-top: auto; padding: 13px 18px; border-top: 1px solid var(--line);
+    display: flex; gap: 8px; align-items: center; background: var(--panel);
+    position: sticky; bottom: 0;
+  }
+  .primary {
+    background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 9px;
+    padding: 10px 18px; font-weight: 700; flex: 1;
+  }
+  .primary:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ---------- notebook ---------- */
+  .note-item { background: var(--panel); border: 1px solid var(--line);
+               border-radius: var(--radius); padding: 14px 16px; margin-bottom: 9px; }
+  .note-item header { all: unset; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .note-item .t { font-weight: 700; }
+  .note-item .lbl { font-size: 12.5px; color: var(--ink-dim); margin: 6px 0 0; }
+  .note-item .expl { font-size: 13px; margin: 9px 0 0;
+                     border-left: 3px solid var(--line); padding-left: 10px; }
+  .note-item .expl.wrong { border-left-color: var(--ng); color: var(--ng); }
+  .note-item .memo { white-space: pre-wrap; font-size: 13.5px; margin: 9px 0 0;
+                     border-left: 3px solid var(--accent); padding-left: 10px; }
+  .note-item .seq { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); margin-top: 7px; }
+  .seq .x { color: var(--ng); font-weight: 700; }
+  .seq .o { color: var(--ok); font-weight: 700; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters button { background: var(--panel); border: 1px solid var(--line);
+                    border-radius: 99px; padding: 4px 13px; font-size: 13px; color: var(--ink-dim); }
+  .filters button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink);
+                                         border-color: var(--accent); font-weight: 600; }
+  .empty { color: var(--ink-dim); text-align: center; padding: 48px 0; font-size: 13.5px; }
+  .kbdlist { font-size: 12.5px; color: var(--ink-dim); }
+  .kbdlist kbd { font: 600 11px/1 var(--mono); border: 1px solid var(--line);
+                 border-bottom-width: 2px; border-radius: 4px; padding: 3px 5px;
+                 background: var(--bg); margin: 0 1px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SG 過去問トレーナー<small id="banner">読み込み中…</small></h1>
+  <nav>
+    <button data-view="home" aria-current="true">ホーム</button>
+    <button data-view="drill">演習</button>
+    <button data-view="notes">間違いノート</button>
+    <button data-view="stats">統計</button>
+  </nav>
+  <span class="spacer"></span>
+  <button class="ghost" id="btn-export">書き出し</button>
+  <button class="ghost" id="btn-import">読み込み</button>
+  <button class="ghost" id="btn-theme" title="表示を切り替える">◐</button>
+</header>
+
+<div id="demobar" hidden></div>
+<main>
+  <!-- ================= HOME ================= -->
+  <section class="view active" id="view-home">
+    <div class="wrap">
+      <section id="about" hidden></section>
+      <h2>学習状況</h2>
+      <p class="sub">記録はこのブラウザに保存されます。別の環境へ移すときは「書き出し」を使ってください。</p>
+      <div class="tiles" id="home-tiles"></div>
+
+      <h3>演習をはじめる</h3>
+      <div id="home-modes"></div>
+
+      <h3>年度別</h3>
+      <div class="card" style="padding:4px 6px"><table id="home-sessions"></table></div>
+
+      <h3>操作</h3>
+      <div class="card kbdlist">
+        演習中はキーボードだけで進められます。<br>
+        <kbd>1</kbd>…<kbd>8</kbd> 解答を選ぶ ／
+        <kbd>Z</kbd> 自信あり <kbd>X</kbd> あやしい <kbd>C</kbd> 勘 ／
+        <kbd>Enter</kbd> / <kbd>Space</kbd> 次の問題 ／ <kbd>M</kbd> メモ入力 ／ <kbd>P</kbd> PDF のページを直す
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DRILL ================= -->
+  <section class="view" id="view-drill">
+    <div id="pdfpane">
+      <iframe id="pdf" title="問題冊子"></iframe>
+      <div id="pdfcanvas" hidden><canvas id="pdfpage"></canvas><p id="pdffail" hidden></p></div>
+      <article id="qtext" hidden></article>
+      <div id="pdfnote" hidden></div>
+    </div>
+    <div id="splitter"></div>
+    <div id="answerpane">
+      <div class="pane-pad">
+        <div class="qhead">
+          <span class="no" id="d-no">—</span>
+          <span class="meta" id="d-meta"></span>
+        </div>
+        <div class="progress">
+          <span id="d-count"></span>
+          <span class="bar"><i id="d-bar" style="width:0"></i></span>
+        </div>
+        <p class="cite" id="d-cite"></p>
+        <p class="mates" id="d-mates" hidden></p>
+        <p class="label" id="d-label" hidden></p>
+
+        <div class="step" id="step1">1. 解答を選ぶ</div>
+        <div class="choices" id="d-choices"></div>
+
+        <div class="step" id="step2">2. どのくらい自信がある？</div>
+        <div class="confs">
+          <button class="conf" data-conf="sure" disabled>自信あり<kbd>Z</kbd></button>
+          <button class="conf" data-conf="shaky" disabled>あやしい<kbd>X</kbd></button>
+          <button class="conf" data-conf="guess" disabled>勘<kbd>C</kbd></button>
+        </div>
+
+        <div id="verdict"></div>
+        <div id="detail"></div>
+
+        <div class="step" id="step3">3. メモ</div>
+        <textarea id="d-memo" placeholder="なぜ間違えたか、どの用語と混同したか。ここに書いた内容は間違いノートに残ります。"></textarea>
+        <p class="hint">⌘ / Ctrl / Shift + Enter で保存して次へ</p>
+      </div>
+      <div class="pane-foot">
+        <button class="ghost" id="d-quit">やめる</button>
+        <button class="ghost" id="d-fixpage" title="PDF の表示ページがずれているとき">ページを直す</button>
+        <button class="ghost" id="d-undo" title="別の問題と取り違えたときなど" hidden>取り消す</button>
+        <button class="primary" id="d-next" disabled>次の問題 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NOTES ================= -->
+  <section class="view" id="view-notes">
+    <div class="wrap">
+      <h2>間違いノート</h2>
+      <p class="sub">間違えた問題と、勘で正解した問題がここに集まります。</p>
+      <div class="filters" id="note-filters"></div>
+      <div id="note-list"></div>
+    </div>
+  </section>
+
+  <!-- ================= STATS ================= -->
+  <section class="view" id="view-stats">
+    <div class="wrap">
+      <h2>統計</h2>
+      <p class="sub">正答率は「勘で当てた分」を除いた実力値も並べて表示します。</p>
+      <div id="stats-body"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+
+const LETTERS = [..."アイウエオカキク"];
+const CONF = { sure: "自信あり", shaky: "あやしい", guess: "勘" };
+const STORE = "sg-trainer-v1";
+/** localhost 以外から開かれていれば公開デモ版。解答は試せるが保存しない。 */
+const DEMO = !["localhost", "127.0.0.1", "[::1]", ""].includes(location.hostname);
+/** 箱(0〜5)ごとの復習間隔(日)。間違えると 0 に戻る。 */
+const INTERVALS = [0, 1, 3, 7, 14, 30];
+const DAY = 86400000;
+
+let DATA = null;          // questions.json
+let BY_ID = new Map();
+let SESSION = new Map();  // sessionId -> session
+let BY_PAGE = new Map();  // "sessionId:page" -> そのページに載っている問
+let rec = {};             // qid -> record
+
+/* ------------------------------------------- 公開デモ版のサンプル記録 */
+/** 統計や間違いノートの見た目を伝えるための作り物。実在の学習記録ではない。 */
+function sampleRecords() {
+  let seed = 20260411;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  const CONFS = ["sure", "shaky", "guess"];
+  const memos = {
+    1: "リスク特定とリスク評価を取り違えた。特定＝見つける、評価＝基準と照らす。",
+    4: "“機会”は環境の話。プレッシャは“動機”のほう。",
+    7: "オプトインとオプトアウトを逆に覚えていた。",
+  };
+  const out = {}, day = 86400000, now = Date.now();
+  DATA.questions.filter(q => q.explanation).slice(0, 28).forEach((q, i) => {
+    const correct = rnd() > 0.38;
+    const conf = CONFS[correct ? (rnd() > 0.3 ? 0 : 2) : (rnd() > 0.5 ? 0 : 1)];
+    const chose = correct ? q.answer
+      : LETTERS.slice(0, q.choices).filter(c => c !== q.answer)[(rnd() * (q.choices - 1)) | 0];
+    const box = correct && conf !== "guess" ? 1 + ((rnd() * 3) | 0) : 0;
+    out[q.id] = {
+      history: [{ at: now - (28 - i) * 3600000, chose, correct, conf,
+                  sec: 15 + ((rnd() * 70) | 0) }],
+      note: memos[i] || "",
+      box,
+      due: new Date().setHours(0, 0, 0, 0) + [0, 1, 3, 7, 14, 30][box] * day,
+      pageFix: null,
+    };
+  });
+  return out;
+}
+
+/* ------------------------------------------------------------------ 保存 */
+function load() {
+  if (DEMO) { rec = sampleRecords(); return; }
+  try { rec = JSON.parse(localStorage.getItem(STORE)) || {}; }
+  catch { rec = {}; }
+  // 中身のない記録は捨てる(過去版が空レコードを書き込んでいたため)
+  for (const [k, v] of Object.entries(rec)) {
+    if (!v || (!v.history?.length && !v.note && !v.pageFix)) delete rec[k];
+  }
+}
+function save() {
+  if (DEMO) return;   // 公開デモ版では何も書き込まない
+  try { localStorage.setItem(STORE, JSON.stringify(rec)); }
+  catch (e) { console.warn("保存できませんでした", e); }
+}
+/** 書き込み用。無ければ作る。読むだけのときは rec[qid] を直接見ること。 */
+function r(qid) {
+  return rec[qid] || (rec[qid] = { history: [], note: "", box: 0, due: null, pageFix: null });
+}
+const get = (q) => rec[q.id] || null;
+const today = () => new Date().setHours(0, 0, 0, 0);
+const last = (q) => { const h = rec[q.id]?.history; return (h && h[h.length - 1]) || null; };
+const seen = (q) => !!rec[q.id]?.history?.length;
+/** 勘で当てた正解は「できた」扱いにしない。 */
+const solid = (h) => h && h.correct && h.conf !== "guess";
+const isDue = (q) => { const x = rec[q.id]; return x && x.due !== null && x.due <= today(); };
+const needsWork = (q) => {
+  const h = last(q);
+  return !!h && !solid(h);
+};
+
+/* --------------------------------------------------------------- 出題集合 */
+function pageOf(q) {
+  const fix = rec[q.id]?.pageFix;
+  return fix || q.page || 1;
+}
+function pdfUrl(q) {
+  const s = SESSION.get(q.sessionId);
+  return s.qsLocal ? `${s.qsLocal}#page=${pageOf(q)}` : null;
+}
+const LETTERS_OF = (q) => LETTERS.slice(0, Math.max(q.choices || 4, 4));
+
+/* ----------------------------------------- 公開版の PDF 描画（PDF.js） */
+const PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+let pdfjsReady = null;
+const pdfDocs = new Map();
+
+function loadPdfJs() {
+  if (pdfjsReady) return pdfjsReady;
+  pdfjsReady = new Promise((resolve, reject) => {
+    const el = document.createElement("script");
+    el.src = PDFJS + "pdf.min.js";
+    el.onload = () => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.js";
+      resolve(window.pdfjsLib);
+    };
+    el.onerror = () => reject(new Error("PDF.js を読み込めませんでした"));
+    document.head.appendChild(el);
+  });
+  return pdfjsReady;
+}
+
+let drawToken = 0;
+async function drawPdfPage(q) {
+  const token = ++drawToken;
+  const canvas = document.getElementById("pdfpage");
+  const fail = document.getElementById("pdffail");
+  const s = SESSION.get(q.sessionId);
+  fail.hidden = true; canvas.hidden = false;
+  try {
+    const lib = await loadPdfJs();
+    let doc = pdfDocs.get(s.qsLocal);
+    if (!doc) {
+      doc = await lib.getDocument(s.qsLocal).promise;
+      pdfDocs.set(s.qsLocal, doc);
+    }
+    if (token !== drawToken) return;
+    const page = await doc.getPage(Math.min(pageOf(q), doc.numPages));
+    if (token !== drawToken) return;
+    const pane = document.getElementById("pdfcanvas");
+    const base = page.getViewport({ scale: 1 });
+    const scale = Math.min((pane.clientWidth - 28) / base.width, 2.2) *
+                  Math.min(devicePixelRatio || 1, 2);
+    const vp = page.getViewport({ scale });
+    canvas.width = vp.width; canvas.height = vp.height;
+    canvas.style.width = Math.round(vp.width / Math.min(devicePixelRatio || 1, 2)) + "px";
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+  } catch (e) {
+    canvas.hidden = true; fail.hidden = false;
+    fail.innerHTML = `問題冊子を表示できませんでした。<br>`
+      + `<a href="${s.qsPdf}" target="_blank" rel="noreferrer">IPA の問題冊子 PDF</a>`
+      + ` の ${pageOf(q)} ページを開いてください。`;
+  }
+}
+
+/* ------------------------------------------------------------- 画面切替え */
+function show(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
+  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-current", String(b.dataset.view === name)));
+  if (name === "home") renderHome();
+  if (name === "notes") renderNotes();
+  if (name === "stats") renderStats();
+  if (name === "drill" && !run.queue.length) show("home");
+}
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => show(b.dataset.view));
+
+/* ================================================================= ホーム */
+function renderHome() {
+  const all = DATA.questions;
+  const answered = all.filter(seen);
+  const hist = answered.map(last);
+  const correct = hist.filter(h => h.correct).length;
+  const lucky = hist.filter(h => h.correct && h.conf === "guess").length;
+  const due = all.filter(isDue).length;
+  const weak = all.filter(needsWork).length;
+  const pct = (n, d) => d ? Math.round(n / d * 100) + "%" : "—";
+
+  document.getElementById("home-tiles").innerHTML = `
+    <div class="tile"><div class="n">${answered.length}<span style="font-size:14px;color:var(--ink-dim)"> / ${all.length}</span></div><div class="k">解いた問題</div></div>
+    <div class="tile"><div class="n">${pct(correct, answered.length)}</div><div class="k">直近の正答率</div></div>
+    <div class="tile"><div class="n">${pct(correct - lucky, answered.length)}</div><div class="k">勘を除いた<b>実力値</b></div></div>
+    <div class="tile"><div class="n">${due}</div><div class="k">今日の復習</div></div>
+    <div class="tile"><div class="n">${weak}</div><div class="k">未定着（要復習）</div></div>`;
+
+  // 分野タグは出所が二つある。筆記年度は IPA が解答例に付けた区分(Ｔ/Ｍ/Ｓ)、
+  // CBT 年度はこちらで付けた細目。混ぜると誤解を生むので見出しを分けて並べる。
+  const fieldsOf = (qs) => [...new Set(qs.map(q => q.field).filter(Boolean))];
+  const paper = all.filter(q => SESSION.get(q.sessionId).kind === "paper");
+  const cbt = all.filter(q => SESSION.get(q.sessionId).kind === "cbt");
+  const byField = (f, pool) => ["field:" + f, f, "この分野だけをランダムに 20 問",
+                                pool.filter(q => q.field === f)];
+  const modes = [
+    ["due", "今日の復習", "間隔をあけて戻ってきた問題", all.filter(isDue)],
+    ["weak", "未定着だけ", "間違えた問題と勘で当てた問題", all.filter(needsWork)],
+    ["fresh", "まだ解いていない問題", "ランダムに 20 問", all.filter(q => !seen(q))],
+    ["b", "科目 B（長文）", "選択肢がア〜クの事例問題", all.filter(q => q.subject === "B")],
+  ];
+  const groups = [
+    [null, modes],
+    ["細目（解説つきの CBT 公開問題）", fieldsOf(cbt).map(f => byField(f, cbt))],
+    ["IPA の分野区分（筆記年度）", fieldsOf(paper).map(f => byField(f, paper))],
+  ];
+  if (all.some(q => q.origin === "generated")) {
+    groups[0][1].push(["gen", "生成問題", "IPA の出題ではない補充用の練習問題",
+      all.filter(q => q.origin === "generated")]);
+  }
+  const tile = ([k, t, d, qs]) =>
+    `<button class="mode" data-mode="${k}" ${qs.length ? "" : "disabled"}>
+       <span class="count">${qs.length}</span><b>${t}</b><span>${d}</span></button>`;
+  document.getElementById("home-modes").innerHTML = groups
+    .filter(([, ms]) => ms.length)
+    .map(([title, ms]) => (title ? `<p class="group">${title}</p>` : "")
+      + `<div class="modes">${ms.map(tile).join("")}</div>`).join("");
+  const modeIndex = new Map(groups.flatMap(([, ms]) => ms).map(m => [m[0], m]));
+  document.querySelectorAll("#home-modes .mode").forEach(b => b.onclick = () => {
+    const k = b.dataset.mode;
+    const def = modeIndex.get(k);
+    let qs = def[3].slice();
+    if (k === "fresh" || k.startsWith("field:")) { shuffle(qs); qs = qs.slice(0, 20); }
+    if (k === "due" || k === "weak") qs.sort((a, b2) => (rec[a.id]?.due ?? 0) - (rec[b2.id]?.due ?? 0));
+    start(qs, def[1]);
+  });
+
+  document.getElementById("home-sessions").innerHTML = `
+    <thead><tr><th>回</th><th class="num">問数</th><th class="num">解答済</th><th class="num">実力値</th><th>進み</th><th></th></tr></thead>
+    <tbody>${DATA.sessions.filter(s => s.id !== "gen").map(s => {
+      const qs = all.filter(q => q.sessionId === s.id);
+      const a = qs.filter(seen), good = a.filter(q => solid(last(q))).length;
+      return `<tr>
+        <td>${s.label} <span class="pill">${s.kind === "cbt" ? "CBT" : "筆記"}</span></td>
+        <td class="num">${qs.length}</td>
+        <td class="num">${a.length}</td>
+        <td class="num">${a.length ? Math.round(good / a.length * 100) + "%" : "—"}</td>
+        <td><span class="bar"><i style="width:${qs.length ? a.length / qs.length * 100 : 0}%"></i></span></td>
+        <td style="text-align:right"><button class="ghost" data-sess="${s.id}">順に解く</button>
+            <button class="ghost" data-shuf="${s.id}">混ぜる</button></td>
+      </tr>`;
+    }).join("")}</tbody>`;
+  document.querySelectorAll("[data-sess]").forEach(b => b.onclick = () => {
+    const s = SESSION.get(b.dataset.sess);
+    start(all.filter(q => q.sessionId === s.id), s.label);
+  });
+  document.querySelectorAll("[data-shuf]").forEach(b => b.onclick = () => {
+    const s = SESSION.get(b.dataset.shuf);
+    const qs = all.filter(q => q.sessionId === s.id); shuffle(qs);
+    start(qs, s.label + "（混ぜ）");
+  });
+
+  document.getElementById("banner").textContent =
+    `${DATA.sessions.length} 回分 / ${all.length} 問`;
+}
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; }
+}
+
+/* ================================================================= 演習 */
+const run = { queue: [], i: 0, title: "", picked: null, conf: null, revealed: false, t0: 0, loadedPdf: "" };
+
+function start(queue, title) {
+  if (!queue.length) return;
+  run.queue = queue; run.i = 0; run.title = title;
+  show("drill"); renderQ();
+}
+const cur = () => run.queue[run.i];
+
+function renderQ() {
+  const q = cur();
+  if (!q) { finish(); return; }
+  run.picked = null; run.conf = null; run.revealed = false; run.t0 = Date.now();
+
+  const s = SESSION.get(q.sessionId);
+  document.getElementById("d-no").textContent = `問 ${q.no}`;
+  document.getElementById("d-meta").innerHTML =
+    `${s.label}${q.field ? " ・ " + q.field : ""}${q.subject === "B" ? ' ・ <span class="pill">科目B</span>' : ""}`
+    + `${q.origin === "generated" ? ' ・ <span class="pill warn">生成</span>' : ""}`
+    + `${q.stale ? ' ・ <span class="pill warn">法改正注意</span>' : ""}`;
+  document.getElementById("d-count").textContent = `${run.title} ${run.i + 1} / ${run.queue.length}`;
+  document.getElementById("d-bar").style.width = (run.i / run.queue.length * 100) + "%";
+
+  document.getElementById("d-cite").textContent =
+    q.origin === "generated" ? "" : `出典：${s.cite} 問${q.no}`;
+  const lbl = document.getElementById("d-label");
+  lbl.hidden = !q.label; lbl.textContent = q.label || "";
+
+  // 1 ページに複数問が載っていることが多い。どれに答えるのかを明示する。
+  const mates = BY_PAGE.get(`${q.sessionId}:${q.page}`) || [];
+  const mateEl = document.getElementById("d-mates");
+  mateEl.hidden = mates.length < 2;
+  mateEl.innerHTML = `${pageOf(q)} ページには `
+    + mates.map(m => m.no === q.no ? `<b>問${m.no}</b>` : `問${m.no}`).join(" ・ ")
+    + ` が載っています。答えるのは <b>問${q.no}</b> です。`;
+
+  // 左ペイン。IPA の問題は PDF、生成問題は本文をそのまま出す。
+  const frame = document.getElementById("pdf"), panel = document.getElementById("qtext");
+  if (q.origin === "generated") {
+    frame.hidden = true; panel.hidden = false;
+    panel.innerHTML = `<span class="tag">生成問題（IPA の出題ではありません）</span>
+      <p class="q">${esc(q.text)}</p>
+      <ol>${q.choiceTexts.map((c, i) =>
+        `<li><b>${LETTERS[i]}</b><span>${esc(c)}</span></li>`).join("")}</ol>
+      ${q.topic ? `<p class="src">シラバスの範囲：${esc(q.topic)}</p>` : ""}`;
+    panel.scrollTop = 0;
+  } else if (DEMO) {
+    // 公開ビューアは PDF プラグインを動かせないので、該当ページだけ描画する
+    panel.hidden = true; frame.hidden = true;
+    document.getElementById("pdfcanvas").hidden = false;
+    drawPdfPage(q);
+  } else {
+    panel.hidden = true; frame.hidden = false;
+    document.getElementById("pdfcanvas").hidden = true;
+    const url = pdfUrl(q);
+    if (url !== run.loadedPdf) { frame.src = url; run.loadedPdf = url; }
+  }
+  const note = document.getElementById("pdfnote"), lines = [];
+  if (q.pageEstimated && !rec[q.id]?.pageFix) {
+    lines.push(`この年度の冊子は画像なので、${pageOf(q)} ページ付近という<b>推定</b>です。`
+      + `ずれていたら「ページを直す」で正しい番号を覚えさせてください。`);
+  }
+  if (q.stale) {
+    lines.push(`この問題は<b>出題当時の法令・規格</b>に基づいています。`
+      + `個人情報保護法や JIS Q 27001 などはその後に改正されているので、`
+      + `現在の正解と食い違う可能性があります。`);
+  }
+  note.hidden = !lines.length || q.origin === "generated";
+  note.innerHTML = lines.map(t => `<p>${t}</p>`).join("");
+  document.getElementById("d-fixpage").hidden = DEMO || q.origin === "generated";
+  const n = Math.max(q.choices || 4, 4);
+  document.getElementById("d-choices").innerHTML = LETTERS.slice(0, n).map((c, i) =>
+    `<button class="choice" data-c="${c}"><kbd>${i + 1}</kbd>${c}</button>`).join("");
+  document.querySelectorAll(".choice").forEach(b => b.onclick = () => pick(b.dataset.c));
+
+  document.querySelectorAll(".conf").forEach(b => { b.disabled = true; b.dataset.on = "0"; b.onclick = () => setConf(b.dataset.conf); });
+  document.getElementById("step1").className = "step";
+  document.getElementById("step2").className = "step";
+  document.getElementById("verdict").className = "";
+  document.getElementById("detail").className = "";
+  document.getElementById("d-memo").value = rec[q.id]?.note || "";
+  document.getElementById("d-next").disabled = true;
+  document.getElementById("d-undo").hidden = true;
+  document.getElementById("answerpane").scrollTop = 0;
+}
+
+function pick(c) {
+  if (run.revealed) return;
+  run.picked = c;
+  document.querySelectorAll(".choice").forEach(b =>
+    b.dataset.state = b.dataset.c === c ? "picked" : "");
+  document.getElementById("step1").className = "step done";
+  document.querySelectorAll(".conf").forEach(b => b.disabled = false);
+}
+
+function setConf(k) {
+  if (run.revealed || !run.picked) return;
+  run.conf = k;
+  document.querySelectorAll(".conf").forEach(b => b.dataset.on = b.dataset.conf === k ? "1" : "0");
+  reveal();
+}
+
+function reveal() {
+  const q = cur();
+  run.revealed = true;
+  const ok = run.picked === q.answer;
+  const sec = Math.round((Date.now() - run.t0) / 1000);
+
+  document.querySelectorAll(".choice").forEach(b => {
+    b.disabled = true;
+    if (b.dataset.c === q.answer) b.dataset.state = "correct";
+    else if (b.dataset.c === run.picked) b.dataset.state = "wrong";
+    else b.dataset.state = "";
+  });
+  document.querySelectorAll(".conf").forEach(b => b.disabled = true);
+  document.getElementById("step2").className = "step done";
+
+  const x = r(q.id);
+  run.undo = { box: x.box, due: x.due };   // 取り違えたときに戻せるようにしておく
+  x.history.push({ at: Date.now(), chose: run.picked, correct: ok, conf: run.conf, sec });
+  // 間隔反復: 自信をもって正解したときだけ箱を進める。
+  if (ok && run.conf !== "guess") x.box = Math.min(x.box + 1, INTERVALS.length - 1);
+  else x.box = 0;
+  x.due = today() + INTERVALS[x.box] * DAY;
+  save();
+
+  const v = document.getElementById("verdict");
+  const nextIn = INTERVALS[x.box];
+  const again = nextIn === 0 ? "次回のセッションでまた出します。" : `次は ${nextIn} 日後に出します。`;
+  if (ok && run.conf === "guess") {
+    v.className = "show lucky";
+    v.innerHTML = `<b>正解（ただし勘）</b><p>正解は <b>${q.answer}</b>。勘で当てた分は実力値に数えません。${again}</p>`;
+  } else if (ok) {
+    v.className = "show ok";
+    v.innerHTML = `<b>正解</b><p>${q.answer}・${sec} 秒。${again}</p>`;
+  } else {
+    v.className = "show ng";
+    const warn = run.conf === "sure" ? "<b>自信ありで誤答</b>です。覚え違いの可能性が高いので、メモを残してください。" : "";
+    v.innerHTML = `<b>誤答</b><p>選んだのは ${run.picked}、正解は <b>${q.answer}</b>。${warn} ${again}</p>`;
+    repeatedMistake(q, run.picked);
+  }
+  showDetail(q, ok ? null : run.picked);
+  document.getElementById("d-undo").hidden = false;
+  document.getElementById("d-next").disabled = false;
+  if (!ok) document.getElementById("d-memo").focus();
+}
+
+/** 解説と、選択肢ごとの「なぜ違うか」を出す。 */
+function showDetail(q, chose) {
+  const el = document.getElementById("detail");
+  if (!q.explanation) {
+    el.className = "show";
+    el.innerHTML = `<h4>解説</h4><div class="body" style="color:var(--ink-dim)">`
+      + `この問題の解説はまだ書かれていません。下のボタンで頼む文面を写せます。</div>`
+      + `<p style="margin:10px 0 0"><button class="ghost" id="d-ask">解説を頼む文面を写す</button></p>`;
+    document.getElementById("d-ask").onclick = (e) => {
+      navigator.clipboard.writeText(askPrompt(q))
+        .then(() => { e.target.textContent = "写しました"; })
+        .catch(() => { e.target.textContent = askPrompt(q); });
+    };
+    return;
+  }
+  const why = q.why || {};
+  const mine = chose && why[chose]
+    ? `<div class="picked"><b>${chose} を選んだ理由を確かめる。</b>${esc(why[chose])}</div>` : "";
+  const rest = Object.entries(why).filter(([c]) => c !== chose);
+  el.className = "show";
+  el.innerHTML = `<h4>解説</h4><div class="body">${esc(q.explanation)}</div>${mine}`
+    + (rest.length ? `<ul>${rest.map(([c, t]) => `<li><b>${c}</b> ${esc(t)}</li>`).join("")}</ul>` : "");
+}
+
+/** 解説が用意されていない問題では、頼むための文面を写せるようにする。 */
+function askPrompt(q) {
+  const s = SESSION.get(q.sessionId);
+  return `${s.label} 問${q.no} の解説をお願いします。`
+    + `正解は ${q.answer} です。${q.label ? `（${q.label}）` : ""}`;
+}
+
+/** 同じ誤答を繰り返していたら知らせる。 */
+function repeatedMistake(q, chose) {
+  const n = (rec[q.id]?.history || []).filter(h => !h.correct && h.chose === chose).length;
+  if (n >= 2) {
+    document.getElementById("verdict").insertAdjacentHTML("beforeend",
+      `<p>この問題で <b>${chose}</b> を選んだのは ${n} 回目です。選択肢 ${chose} の内容が正しいと思い込んでいないか確かめてください。</p>`);
+  }
+}
+
+function saveMemo() {
+  const q = cur(); if (!q) return;
+  r(q.id).note = document.getElementById("d-memo").value.trim();
+  save();
+}
+function next() {
+  if (!run.revealed) return;
+  saveMemo();
+  run.i++;
+  if (run.i >= run.queue.length) finish(); else renderQ();
+}
+function finish() {
+  const done = run.queue.map(q => last(q)).filter(Boolean);
+  const ok = done.filter(h => h.correct).length;
+  const lucky = done.filter(h => h.correct && h.conf === "guess").length;
+  run.queue = [];
+  alert(`おつかれさまでした。\n\n${run.title}\n${done.length} 問中 ${ok} 問正解`
+      + (lucky ? `（うち勘での正解 ${lucky} 問）` : "")
+      + `\n\n間違えた問題は「間違いノート」に残り、復習キューに入りました。`);
+  show("home");
+}
+
+document.getElementById("d-undo").onclick = () => {
+  const q = cur();
+  if (!q || !run.revealed) return;
+  const x = rec[q.id];
+  x.history.pop();
+  if (run.undo) { x.box = run.undo.box; x.due = run.undo.due; }
+  if (!x.history.length && !x.note && !x.pageFix) delete rec[q.id];
+  save();
+  run.loadedPdf = "";   // PDF を開き直して先頭から読み直せるようにする
+  renderQ();
+};
+document.getElementById("d-next").onclick = next;
+document.getElementById("d-quit").onclick = () => { saveMemo(); run.queue = []; show("home"); };
+document.getElementById("d-fixpage").onclick = () => {
+  const q = cur(); if (!q) return;
+  const s = SESSION.get(q.sessionId);
+  const v = prompt(`問 ${q.no} は冊子の何ページ目にありますか？（全 ${s.pdfPages} ページ）`, pageOf(q));
+  const n = parseInt(v, 10);
+  if (!n || n < 1 || n > s.pdfPages) return;
+  r(q.id).pageFix = n; save();
+  run.loadedPdf = ""; renderQ();
+};
+
+document.addEventListener("keydown", e => {
+  const inMemo = e.target.id === "d-memo";
+  const isEnter = e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter";
+  if (inMemo && isEnter && (e.metaKey || e.ctrlKey || e.shiftKey)) { e.preventDefault(); next(); return; }
+  if (!document.getElementById("view-drill").classList.contains("active")) return;
+  if (inMemo) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (/^[1-8]$/.test(k)) {
+    const c = LETTERS[+k - 1];
+    if (document.querySelector(`.choice[data-c="${c}"]`)) { e.preventDefault(); pick(c); }
+  } else if (k === "z" || k === "x" || k === "c") {
+    e.preventDefault(); setConf({ z: "sure", x: "shaky", c: "guess" }[k]);
+  } else if (isEnter || e.key === " ") {
+    e.preventDefault(); next();
+  } else if (k === "m") {
+    e.preventDefault(); document.getElementById("d-memo").focus();
+  } else if (k === "p") {
+    e.preventDefault(); document.getElementById("d-fixpage").click();
+  }
+});
+
+/* ---------------------------------------------------------- 分割バーの操作 */
+(() => {
+  const sp = document.getElementById("splitter"), pane = document.getElementById("answerpane");
+  let on = false;
+  sp.addEventListener("mousedown", e => { on = true; e.preventDefault(); document.body.style.userSelect = "none"; });
+  addEventListener("mousemove", e => { if (on) pane.style.width = Math.min(Math.max(innerWidth - e.clientX, 300), innerWidth * 0.7) + "px"; });
+  addEventListener("mouseup", () => { on = false; document.body.style.userSelect = ""; });
+})();
+
+/* ========================================================= 間違いノート */
+let noteFilter = "needs";
+function renderNotes() {
+  const all = DATA.questions.filter(seen);
+  const sets = {
+    needs: ["未定着", all.filter(needsWork)],
+    sure: ["自信ありで誤答", all.filter(q => get(q).history.some(h => !h.correct && h.conf === "sure"))],
+    lucky: ["勘で正解", all.filter(q => { const h = last(q); return h && h.correct && h.conf === "guess"; })],
+    memo: ["メモあり", all.filter(q => get(q).note)],
+    all: ["解答済みすべて", all],
+  };
+  document.getElementById("note-filters").innerHTML = Object.entries(sets).map(([k, [t, qs]]) =>
+    `<button data-f="${k}" aria-pressed="${k === noteFilter}">${t} ${qs.length}</button>`).join("");
+  document.querySelectorAll("#note-filters button").forEach(b => b.onclick = () => { noteFilter = b.dataset.f; renderNotes(); });
+
+  const list = sets[noteFilter][1].slice()
+    .sort((a, b) => (last(b)?.at || 0) - (last(a)?.at || 0));
+  const el = document.getElementById("note-list");
+  if (!list.length) { el.innerHTML = `<p class="empty">該当する問題はまだありません。</p>`; return; }
+
+  el.innerHTML = list.map(q => {
+    const x = get(q), s = SESSION.get(q.sessionId);
+    const seq = x.history.map(h =>
+      `<span class="${h.correct ? "o" : "x"}">${h.correct ? "○" : "×"}${h.chose}</span>` +
+      `<span style="opacity:.6">(${CONF[h.conf] || "?"})</span>`).join(" → ");
+    const dueIn = x.due === null ? "" : x.due <= today() ? "今日が復習日"
+      : `復習日 ${new Date(x.due).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}`;
+    return `<div class="note-item">
+      <header>
+        <span class="t">${s.label} 問 ${q.no}</span>
+        <span class="pill">正解 ${q.answer}</span>
+        ${q.field ? `<span class="pill">${q.field}</span>` : ""}
+        ${q.subject === "B" ? '<span class="pill">科目B</span>' : ""}
+        <span class="spacer" style="flex:1"></span>
+        <span class="pill">${dueIn}</span>
+      </header>
+      ${q.label ? `<p class="lbl">${q.label}</p>` : ""}
+      ${s.cite ? `<p class="cite">出典：${s.cite} 問${q.no}</p>` : ""}
+      <p class="seq">${seq}</p>
+      ${q.explanation ? `<p class="expl">${esc(q.explanation)}</p>` : ""}
+      ${q.why && x.history.some(h => !h.correct && q.why[h.chose])
+        ? `<p class="expl wrong">${[...new Set(x.history.filter(h => !h.correct).map(h => h.chose))]
+            .filter(c => q.why[c]).map(c => `<b>${c}</b> ${esc(q.why[c])}`).join("<br>")}</p>` : ""}
+      ${x.note ? `<p class="memo">${esc(x.note)}</p>` : ""}
+      <p style="margin:10px 0 0"><button class="ghost" data-one="${q.id}">この問題を解き直す</button>
+        ${s.qsLocal ? `<a class="ghost" style="text-decoration:none" href="${s.qsLocal}#page=${pageOf(q)}" target="_blank">冊子を開く</a>
+        <a class="ghost" style="text-decoration:none" href="${s.ansPdf}" target="_blank">IPA の解答例</a>` : ""}
+        <button class="ghost" data-del="${q.id}" title="取り違えて記録したときなど">記録を消す</button></p>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("[data-one]").forEach(b => b.onclick = () =>
+    start([BY_ID.get(b.dataset.one)], "解き直し"));
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+    const q = BY_ID.get(b.dataset.del);
+    if (!confirm(`${SESSION.get(q.sessionId).label} 問${q.no} の解答履歴とメモを消します。`)) return;
+    delete rec[q.id]; save(); renderNotes();
+  });
+}
+function esc(s) { return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+/* ================================================================= 統計 */
+function renderStats() {
+  const all = DATA.questions, answered = all.filter(seen);
+  if (!answered.length) {
+    document.getElementById("stats-body").innerHTML = `<p class="empty">まだ記録がありません。演習をはじめてください。</p>`;
+    return;
+  }
+  const row = (name, qs) => {
+    const a = qs.filter(seen); if (!a.length) return "";
+    const good = a.filter(q => solid(last(q))).length;
+    const raw = a.filter(q => last(q).correct).length;
+    const p = Math.round(good / a.length * 100);
+    return `<tr><td>${name}</td><td class="num">${a.length} / ${qs.length}</td>
+      <td class="num">${Math.round(raw / a.length * 100)}%</td>
+      <td class="num"><b>${p}%</b></td>
+      <td><span class="bar"><i style="width:${p}%"></i></span></td></tr>`;
+  };
+  const table = (title, rows) => `<h3>${title}</h3><div class="card" style="padding:4px 6px"><table>
+    <thead><tr><th>区分</th><th class="num">解答済</th><th class="num">正答率</th><th class="num">実力値</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+
+  const ipa = all.filter(q => q.origin !== "generated");
+  const gen = all.filter(q => q.origin === "generated");
+  const fields = [...new Set(all.map(q => q.field).filter(Boolean))];
+  const allConf = answered.flatMap(q => get(q).history);
+  const byConf = Object.keys(CONF).map(k => {
+    const h = allConf.filter(x => x.conf === k);
+    return `<tr><td>${CONF[k]}</td><td class="num">${h.length}</td>
+      <td class="num">${h.length ? Math.round(h.filter(x => x.correct).length / h.length * 100) + "%" : "—"}</td></tr>`;
+  }).join("");
+
+  const slow = answered.map(q => ({ q, h: last(q) })).filter(x => x.h.sec >= 90)
+    .sort((a, b) => b.h.sec - a.h.sec).slice(0, 8);
+
+  document.getElementById("stats-body").innerHTML =
+    table("分野別（IPA 公開問題）", fields.map(f => row(f, ipa.filter(q => q.field === f))).join("")
+      + row("科目 B（長文）", ipa.filter(q => q.subject === "B")))
+    + table("年度別", DATA.sessions.filter(s => s.id !== "gen")
+        .map(s => row(s.label, ipa.filter(q => q.sessionId === s.id))).join("")
+      + (gen.some(seen) ? row("生成問題（参考）", gen) : ""))
+    + `<h3>自信度と実際の正誤</h3><div class="card" style="padding:4px 6px"><table>
+        <thead><tr><th>申告した自信</th><th class="num">回数</th><th class="num">実際の正答率</th></tr></thead>
+        <tbody>${byConf}</tbody></table></div>
+       <p class="hint">「自信あり」の正答率が低いときは、知識が誤って定着しています。そこを優先して直してください。</p>`
+    + (slow.length ? `<h3>時間がかかった問題</h3><div class="card" style="padding:4px 6px"><table>
+        <thead><tr><th>問題</th><th class="num">秒</th><th class="num">結果</th></tr></thead>
+        <tbody>${slow.map(x => `<tr><td>${SESSION.get(x.q.sessionId).label} 問 ${x.q.no}</td>
+          <td class="num">${x.h.sec}</td><td class="num">${x.h.correct ? "○" : "×"}</td></tr>`).join("")}</tbody>
+        </table></div><p class="hint">正解していても時間がかかる問題は、本番で取りこぼす候補です。</p>` : "");
+}
+
+/* ================================================= 書き出し・読み込みほか */
+document.getElementById("btn-export").onclick = () => {
+  const blob = new Blob([JSON.stringify({ app: STORE, exported: new Date().toISOString(), records: rec }, null, 1)],
+    { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `sg-records-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+};
+document.getElementById("btn-import").onclick = () => {
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = ".json,application/json";
+  inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      const got = d.records || d;
+      if (typeof got !== "object") throw new Error("形式が違います");
+      if (!confirm(`${Object.keys(got).length} 問の記録を読み込みます。いまの記録は置き換わります。`)) return;
+      rec = got; save(); show("home");
+    } catch (e) { alert("読み込めませんでした: " + e.message); }
+  };
+  inp.click();
+};
+document.getElementById("btn-theme").onclick = () => {
+  const cur = document.documentElement.dataset.theme;
+  const next = cur === "dark" ? "light" : cur === "light" ? "" : "dark";
+  if (next) document.documentElement.dataset.theme = next;
+  else delete document.documentElement.dataset.theme;
+  try { localStorage.setItem(STORE + ":theme", next); } catch {}
+};
+try {
+  const t = localStorage.getItem(STORE + ":theme");
+  if (t) document.documentElement.dataset.theme = t;
+} catch {}
+
+/* =================================================================== 起動 */
+function setupDemo() {
+  const bar = document.getElementById("demobar");
+  bar.hidden = false;
+  bar.innerHTML = `<b>公開デモ版です。</b>問題を解いて解説まで見られますが、`
+    + `<b>解答は記録されません</b>（統計と間違いノートに入っているのは見た目を示すためのサンプルです）。`
+    + `作者は手元の localhost 版で学習しており、その記録はここには出ません。`;
+  // 公開ビューアでは confirm / prompt が無効なので、それに頼る操作は隠す
+  for (const id of ["btn-export", "btn-import", "d-fixpage"]) {
+    document.getElementById(id).hidden = true;
+  }
+  document.getElementById("d-memo").placeholder =
+    "（デモ版では保存されません）なぜ間違えたか、どの用語と混同したか。";
+
+  const about = document.getElementById("about");
+  about.hidden = false;
+  about.innerHTML = `
+    <h2>このアプリについて</h2>
+    <p>情報セキュリティマネジメント試験（SG）の過去問 460 問を解くための学習アプリ。
+       問題文は持たず、IPA が公開している問題冊子 PDF を左に出し、右で解答する。
+       アプリが持つのは正解・分野・解説・冊子の何ページ目かだけ。</p>
+    <dl>
+      <dt>正解の出どころ</dt>
+      <dd>全 460 問、IPA の解答例 PDF からテキスト抽出。推測は使っていない。
+          筆記年度は解答例に付いている分野記号（Ｔ／Ｍ／Ｓ）もそのまま取り込む。</dd>
+      <dt>ページの特定</dt>
+      <dd>CBT 年度の冊子はテキスト層があるので直接読む。筆記年度はスキャン画像なので
+          macOS の Vision で OCR。460 問中 459 問のページを確定。</dd>
+      <dt>自信度の記録</dt>
+      <dd>解答のたびに「自信あり／あやしい／勘」を取る。勘で当てた正解は実力に数えず
+          復習キューに残す。統計では素の正答率と実力値を並べる。</dd>
+      <dt>間隔反復</dt>
+      <dd>自信をもって正解したときだけ 1→3→7→14→30 日と間隔を延ばす。
+          間違えるか勘で当てたら 1 日に戻る。</dd>
+      <dt>誤答の分析</dt>
+      <dd>解説は正解の理由だけでなく、誤答選択肢それぞれが何の説明なのかまで持つ。
+          選んだ選択肢の解説が名指しで出る。同じ誤答を繰り返すと警告する。</dd>
+      <dt>古い問題の扱い</dt>
+      <dd>出題後に法令や規格が改正された可能性のある 29 問に「法改正注意」を立てている。</dd>
+    </dl>
+    <p class="foot">問題冊子・解答例の出典は独立行政法人情報処理推進機構（IPA）。
+      <a href="https://www.ipa.go.jp/shiken/mondai-kaiotu/index.html" target="_blank"
+         rel="noreferrer">過去問題</a> ／
+      <a href="https://www.ipa.go.jp/shiken/mondai-kaiotu/sg_fe/koukai/index.html" target="_blank"
+         rel="noreferrer">SG・FE 公開問題</a>。
+      IPA は公表している過去問題の使用について、法令に特別の定めがある場合を除き許諾・使用料は
+      不要としている（著作権は IPA が保持）。各問題には出典を明記している。
+      解説は本アプリ独自のもので、IPA によるものではない。</p>`;
+}
+
+(async () => {
+  try {
+    const res = await fetch("data/questions.json");
+    if (!res.ok) throw new Error(res.status + " " + res.statusText);
+    DATA = await res.json();
+  } catch (e) {
+    document.getElementById("banner").textContent = "";
+    document.querySelector("#view-home .wrap").innerHTML =
+      `<h2>問題データを読み込めませんでした</h2>
+       <p class="sub">${esc(String(e.message))}</p>
+       <div class="card">このページは <code>file://</code> では動きません。
+       プロジェクトの直下で次を実行し、表示された URL を開いてください。
+       <pre style="background:var(--bg);padding:10px;border-radius:8px">python3 -m http.server 8799</pre>
+       <code>data/questions.json</code> が無い場合は
+       <code>python3 scripts/build_dataset.py</code> で生成してください。</div>`;
+    return;
+  }
+  DATA.sessions.forEach(s => SESSION.set(s.id, s));
+  DATA.questions.forEach(q => {
+    BY_ID.set(q.id, q);
+    if (q.page == null) return;
+    const k = `${q.sessionId}:${q.page}`;
+    BY_PAGE.set(k, [...(BY_PAGE.get(k) || []), q]);
+  });
+  BY_PAGE.forEach(v => v.sort((a, b) => a.no - b.no));
+  load();
+  if (DEMO) setupDemo();
+  renderHome();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# IPA の PDF は scripts/build_dataset.py で再取得できる
+scripts/cache/
+data/pdf/
+.venv/
+.DS_Store
+__pycache__/
+dist/
